@@ -6,7 +6,7 @@ from matplotlib.patches import Rectangle
 from skimage.color import lab2rgb
 
 
-# Функции преобразования цветов
+
 def xyz2lab(colors_xyz, white_n_XYZ):
     c = np.array(colors_xyz)
     if len(c.shape) == 1:
@@ -44,14 +44,11 @@ def show_color_difference(lab1, lab2, delta_e):
     plt.show()
 
 def delta_e_00(lab1, lab2, kL=1, kC=1, kH=1):
-    """
-    Вычисление цветового различия ΔE₀₀ (CIEDE2000) между двумя цветами в Lab
-    Реализация стандарта CIE Delta E 2000
-    """
+ 
+
     L1, a1, b1 = lab1
     L2, a2, b2 = lab2
     
-    # Шаг 1: Преобразование a* → a' (компенсация нейтральных цветов)
     C1_ab = sqrt(a1**2 + b1**2)
     C2_ab = sqrt(a2**2 + b2**2)
     C_ab_avg = (C1_ab + C2_ab) / 2
@@ -60,11 +57,9 @@ def delta_e_00(lab1, lab2, kL=1, kC=1, kH=1):
     a1_prime = (1 + G) * a1
     a2_prime = (1 + G) * a2
     
-    # Шаг 2: Расчёт C' (новая насыщенность)
     C1_prime = sqrt(a1_prime**2 + b1**2)
     C2_prime = sqrt(a2_prime**2 + b2**2)
     
-    # Шаг 3: Расчёт угла тона h'
     def compute_h_prime(a, b):
         if a == 0 and b == 0:
             return 0
@@ -74,14 +69,11 @@ def delta_e_00(lab1, lab2, kL=1, kC=1, kH=1):
     
     h1_prime = compute_h_prime(a1_prime, b1)
     h2_prime = compute_h_prime(a2_prime, b2)
-    
-    # Шаг 4: Разница по светлоте (ΔL')
+
     delta_L_prime = L2 - L1
     
-    # Шаг 5: Разница по насыщенности (ΔC')
-    delta_C_prime = C2_prime - C1_prime
     
-    # Шаг 6: Разница по тону (ΔH')
+    delta_C_prime = C2_prime - C1_prime
     delta_h_prime = 0
     if C1_prime * C2_prime != 0:
         delta_h_prime = h2_prime - h1_prime
@@ -93,7 +85,6 @@ def delta_e_00(lab1, lab2, kL=1, kC=1, kH=1):
     
     delta_H_prime = 2 * sqrt(C1_prime * C2_prime) * sin(radians(delta_h_prime / 2))
     
-    # Шаг 7: Средние значения (L̄, C̄', H̄')
     L_avg = (L1 + L2) / 2
     C_prime_avg = (C1_prime + C2_prime) / 2
     
@@ -109,7 +100,7 @@ def delta_e_00(lab1, lab2, kL=1, kC=1, kH=1):
     
     H_prime_avg = compute_H_prime_avg(h1_prime, h2_prime, C1_prime, C2_prime)
     
-    # Шаг 8: Весовые коэффициенты (S_L, S_C, S_H)
+
     T = (1 - 0.17 * cos(radians(H_prime_avg - 30))
          + 0.24 * cos(radians(2 * H_prime_avg))
          + 0.32 * cos(radians(3 * H_prime_avg + 6))
@@ -118,8 +109,7 @@ def delta_e_00(lab1, lab2, kL=1, kC=1, kH=1):
     S_L = 1 + (0.015 * (L_avg - 50)**2) / sqrt(20 + (L_avg - 50)**2)
     S_C = 1 + 0.045 * C_prime_avg
     S_H = 1 + 0.015 * C_prime_avg * T
-    
-    # Шаг 9: Поправочный член R_T (для синей области)
+
     delta_theta = 30 * exp(-((H_prime_avg - 275) / 25)**2)
     R_C = 2 * sqrt((C_prime_avg**7) / (C_prime_avg**7 + 25**7))
     R_T = -R_C * sin(radians(2 * delta_theta))
